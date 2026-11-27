@@ -54,36 +54,11 @@ class TicketService:
         previous_tickets, created_at = data.previous_tickets, data.created_at
 tiene menú contextual
 
-        if not name.strip():
-            raise ValueError("El nombre no puede estar vacio")
-        if "@" not in email:
-            raise ValueError("El email no es valido")
-        if len(message.strip()) < MIN_MESSAGE_LENGTH:
-            raise ValueError("El mensaje es demasiado corto")
-
-        if is_premium or "urgente" in message.lower():
-            priority = "alta"
-        elif previous_tickets > 3:
-            priority = "media"
-        else:
-            priority = "baja"
-
+        self._validate(name, email, message)
+        priority = self._compute_priority(message, is_premium, previous_tickets)
         self._counter += 1
         ticket_id = f"CHEAP-{self._counter:04d}"
-
-        if language == "en":
-            replies = {
-                "alta": "We got your complaint and it's on fire (priority-wise, we hope not literally).",
-                "media": "We got your complaint. You're a frequent flyer, we'll get to it soon-ish.",
-                "baja": "We got your complaint. It'll sit in the queue with the other cheap problems.",
-            }
-        else:
-            replies = {
-                "alta": "Recibimos tu reclamo y esta que arde (de prioridad, esperamos que no literal).",
-                "media": "Recibimos tu reclamo. Ya eres cliente frecuente del drama, lo veremos pronto.",
-                "baja": "Recibimos tu reclamo. Hara fila con los demas problemas baratos.",
-            }
-        auto_reply = replies[priority]
+        auto_reply = self._auto_reply(language, priority)
 
         ticket = Ticket(
             id=ticket_id,
@@ -100,3 +75,32 @@ tiene menú contextual
         )
         self._tickets.append(ticket)
         return ticket
+    def _validate(self, name, email, message):
+        if not name.strip():
+            raise ValueError("El nombre no puede estar vacio")
+        if "@" not in email:
+            raise ValueError("El email no es valido")
+        if len(message.strip()) < MIN_MESSAGE_LENGTH:
+            raise ValueError("El mensaje es demasiado corto")
+
+    def _compute_priority(self, message, is_premium, previous_tickets):
+        if is_premium or "urgente" in message.lower():
+            return "alta"
+        if previous_tickets > 3:
+            return "media"
+        return "baja"
+
+    def _auto_reply(self, language, priority):
+        if language == "en":
+            replies = {
+                "alta": "We got your complaint and it's on fire (priority-wise, we hope not literally).",
+                "media": "We got your complaint. You're a frequent flyer, we'll get to it soon-ish.",
+                "baja": "We got your complaint. It'll sit in the queue with the other cheap problems.",
+            }
+        else:
+            replies = {
+                "alta": "Recibimos tu reclamo y esta que arde (de prioridad, esperamos que no literal).",
+                "media": "Recibimos tu reclamo. Ya eres cliente frecuente del drama, lo veremos pronto.",
+                "baja": "Recibimos tu reclamo. Hara fila con los demas problemas baratos.",
+            }
+        return replies[priority]
