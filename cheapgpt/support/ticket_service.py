@@ -8,7 +8,7 @@ from typing import Callable
 
 MIN_MESSAGE_LENGTH = 10
 
-
+@dataclass(frozen=True)class ComplaintData:    name: stremail: strmessage: strchannel: stris_premium: boolprevious_tickets: intlanguage: strcreated_at: datetime
 @dataclass(frozen=True)
 class Ticket:
     id: str
@@ -44,12 +44,16 @@ class TicketService:
     ) -> Ticket:
         previous_tickets = len(self.tickets_for(email))
         created_at = self._clock()
-        return self._register_ticket(
-            name, email, message, channel, is_premium, previous_tickets, language, created_at
+       return self._register_ticket(
+            ComplaintData(name, email, message, channel, is_premium, previous_tickets, language, created_at)
         )
+ 
+    def _register_ticket(self, data: ComplaintData) -> Ticket:
+        name, email, message = data.name, data.email, data.message
+        channel, is_premium, language = data.channel, data.is_premium, data.language
+        previous_tickets, created_at = data.previous_tickets, data.created_at
+tiene menú contextual
 
-    def _register_ticket(self, name, email, message, channel, is_premium,
-                          previous_tickets, language, created_at):
         if not name.strip():
             raise ValueError("El nombre no puede estar vacio")
         if "@" not in email:
